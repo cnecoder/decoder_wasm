@@ -7,9 +7,15 @@ var DECODER_H265 = 1;
 
 var decoder_type = DECODER_H265;
 
+var start_time = 0;
+var count = 0;
+var pre_count = 0;
+
 function handleVideoFiles(files) {
     var file_list = files;
     var file_idx = 0;
+    start_time = Date.now();
+    console.log("start time[%d]", start_time);
     decode_seq(file_list, file_idx);
 }
 
@@ -21,11 +27,10 @@ function decode_seq(file_list, file_idx) {
     if (file_idx >= file_list.length)
         return;
     var file = file_list[file_idx];
-    var start_time = new Date();
 
     var videoSize = 0;
     var videoCallback = Module.addFunction(function (addr_y, addr_u, addr_v, stride_y, stride_u, stride_v, width, height, pts) {
-        console.log("[%d]In video callback, size = %d * %d, pts = %d", ++videoSize, width, height, pts)
+        // console.log("[%d]In video callback, size = %d * %d, pts = %d", ++videoSize, width, height, pts)
         let size = width * height + (width / 2)  * (height / 2) + (width / 2)  * (height / 2)
         let data = new Uint8Array(size)
         let pos = 0
@@ -55,6 +60,16 @@ function decode_seq(file_list, file_idx) {
             width,
             height
         }
+
+        count++;
+
+        var now = Date.now();
+        if (now - start_time >= 1000) {
+            console.log("cost %d ms, %d fps", now - start_time, count - pre_count);
+            pre_count = count;
+            start_time = now;
+        }
+
         displayVideoFrame(obj);
     });
 
