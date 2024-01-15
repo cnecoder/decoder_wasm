@@ -70,7 +70,10 @@ function decode_seq(file_list, file_idx) {
             start_time = now;
         }
 
+        var before_display = Date.now();
         displayVideoFrame(obj);
+        var after_display = Date.now();
+        console.log("display cost %d ms", after_display-before_display);
     });
 
     var ret = Module._openDecoder(decoder_type, videoCallback, LOG_LEVEL_WASM)
@@ -82,7 +85,7 @@ function decode_seq(file_list, file_idx) {
     }
 
     var readerIndex = 0
-    var CHUNK_SIZE = 4096;
+    var CHUNK_SIZE = 4096*5;
     var i_stream_size = 0;
     var filePos = 0;
     var totalSize = 0
@@ -95,9 +98,12 @@ function decode_seq(file_list, file_idx) {
             var cacheBuffer = Module._malloc(size);
             Module.HEAPU8.set(typedArray, cacheBuffer);
             totalSize += size
-            // console.log("[" + (++readerIndex) + "] Read len = ", size + ", Total size = " + totalSize)
+            console.log("[" + (++readerIndex) + "] Read len = ", size + ", Total size = " + totalSize)
 
+            var before_decoder = Date.now();
             Module._decodeData(cacheBuffer, size, pts++)
+            var after_decoder = Date.now();
+            console.log("decoder cost %d ms", after_decoder-before_decoder);
             if (cacheBuffer != null) {
                 Module._free(cacheBuffer);
                 cacheBuffer = null;
